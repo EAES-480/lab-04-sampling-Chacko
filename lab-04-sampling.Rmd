@@ -12,7 +12,7 @@ output:
     code_folding: hide
     df_print: paged
 editor_options:
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE, eval=T}
@@ -75,10 +75,13 @@ This dataset uses **Year + Day-of-Year (DOY)**. Month must be derived from a cal
 
 ```{r derive_time, echo=TRUE, eval=FALSE}
 df <- df %>%
+  filter(year_local == 2023) %>%
+  filter(daytime != -9999) %>%
+  filter(doy != -9999) %>%
   mutate(
     # TODO: create a Date column from year_local and doy
     # HINT: Jan 1 is DOY = 1, so use (doy - 1) with origin = "YYYY-01-01"
-    date = as.Date(doy - 1, origin = paste0(2023, "-01-01")),
+    date = as.Date(doy - 1, origin = paste0(year_local, "-01-01")),
 
     # TODO: create a month column (numeric 1–12 or labeled months)
     month = month(1, label = TRUE, abbr = TRUE),
@@ -117,7 +120,7 @@ df %>% summarise(
 
 **Prompt (2–3 sentences):** Why did you choose this response variable? What do you expect its seasonality/day–night pattern to be?
 
-> *Write your answer here.*
+> *I chose this response variable since I thought it would be less confusing, at least for me, than the meteorological values. I dont expect it to change much on a day-night cycle. Maybe plants use more/less carbon during the day or night, but I expect it to not change too much.*
 
 ---
 
@@ -129,11 +132,11 @@ https://ameriflux.lbl.gov/data/aboutdata/data-variables/
 Fill in at least **5 variables** from this dataset:
 
 | Variable | Units | Description | Expected sign/seasonality? |
-|----------|-------|-------------|----------------------------|
-|          |       |             |                            |
-|          |       |             |                            |
-|          |       |             |                            |
-|          |       |             |                            |
+|EVI|non-dimensional|Enhanced Vegetation Index| Will be higher during spring|
+|FCH4|nmolCH4 m-2 s-1|Methane (CH4) turbulent flux (no storage correction)|Higher when warmer|
+|H2O|mmolH2O mol-1|Water (H2O) vapor in mole fraction of wet air|higher when warmer|
+|CO|nmolCO mol-1|Carbon Monoxide (CO) mole fraction in wet air|minimal change|
+|FC|µmolCO2 m-2 s-1|Carbon Dioxide (CO2) turbulent flux (no storage correction)| minimal change                          |
 |          |       |             |                            |
 
 ---
@@ -149,7 +152,7 @@ Remember: for this lab, the **population** is the entire 2023 half-hourly time s
 # TODO: pick a y aesthetic using response_var.
 
 df %>%
-  ggplot(aes(x = date, y = ____)) +
+  ggplot(aes(x = date, y = fc)) +
   geom_line(alpha = 0.25) +
   theme_classic(base_size = 18) +
   labs(
@@ -161,7 +164,7 @@ df %>%
 
 **Prompt (2–3 sentences):** What major patterns do you see? (Seasonal cycle? Daily cycle? Outliers?)
 
-> *Write your answer here.*
+> *The carbon flux does not change. This lines up with my predictiosn, but I expected a little more variablilty. This could be an issue with how I coded the grapgh or the data collection.*
 
 ---
 
@@ -171,12 +174,12 @@ df %>%
 # GOAL: See the overall distribution of the population.
 # TODO: choose an appropriate number of bins (start with ~50).
 
-ggplot(df, aes(x = ____)) +
-  geom_histogram(bins = ___, alpha = 0.7) +
+ggplot(df, aes(x = fc)) +
+  geom_histogram(bins = 50, alpha = 0.7) +
   theme_classic(base_size = 18) +
   labs(x = response_var, y = "Count", title = "Population distribution (histogram)")
 
-ggplot(df, aes(x = ____)) +
+ggplot(df, aes(x = fc)) +
   geom_density(alpha = 0.7) +
   theme_classic(base_size = 18) +
   labs(x = response_var, y = "Density", title = "Population distribution (density)")
@@ -184,7 +187,7 @@ ggplot(df, aes(x = ____)) +
 
 **Prompt:** Describe shape (skew, modality), center, and spread.
 
-> *Write your answer here.*
+> *The plots have a normal distrobution with a slight right-skew. The center by far has the most data points. The majority of the data seems to be around the 0 fc point.*
 
 ---
 
@@ -194,8 +197,13 @@ ggplot(df, aes(x = ____)) +
 
 ```{r pop_by_month, echo=TRUE, eval=FALSE}
 # TODO: make month appear in a sensible order (it already is an ordered factor if label=TRUE)
+
+df$month <- factor(df$month, levels = month.abb)
 df %>%
-  ggplot(aes(x = month, y = ____)) +
+  mutate(
+    month = factor(month, levels = month.abb)
+  ) %>%
+  ggplot(aes(x = month, y = fc)) +
   geom_boxplot(outlier.alpha = 0.25) +
   theme_classic(base_size = 18) +
   labs(x = NULL, y = response_var, title = "Population by month")
@@ -213,7 +221,7 @@ df %>%
 
 **Prompt (3–4 sentences):** Which grouping variable (month or day/night) seems to explain more variability in your response? Why?
 
-> *Write your answer here.*
+> *Monthly seems to have more variablility. Sicne the variable is about carbon flux and the average is alredy close to zero, the difference is small. I think carbon is more suceptable to change between seasons with all the vegetation change than it is on a day to day basis.*
 
 ---
 
@@ -222,8 +230,8 @@ df %>%
 Compute the population mean and SD for your chosen response variable.
 
 ```{r population_params, echo=TRUE, eval=FALSE}
-pop_mean <- mean(df____, na.rm = TRUE)
-pop_sd   <- sd(df____, na.rm = TRUE)
+pop_mean <- mean(df[[response_var]], na.rm = TRUE)
+pop_sd   <- sd(df[[response_var]], na.rm = TRUE)
 
 tibble(
   response_var = response_var,
@@ -242,13 +250,13 @@ tibble(
 set.seed(480)
 
 # TODO: choose a sample size (e.g., 200, 500, 1000)
-n_samp <- ___
+n_samp <- 1000
 
 samp <- df %>%
   slice_sample(n = n_samp)
 
-samp_mean <- mean(samp____, na.rm = TRUE)
-samp_sd   <- sd(samp____, na.rm = TRUE)
+samp_mean <- mean(samp[[response_var]], na.rm = TRUE)
+samp_sd   <- sd(samp[[response_var]], na.rm = TRUE)
 
 tibble(
   n_samp = n_samp,
@@ -261,7 +269,7 @@ tibble(
 
 **Prompt (2–3 sentences):** How close is your one-sample estimate to the population mean/SD? Is the difference surprising?
 
-> *Write your answer here.*
+> *They were incredibly close. They were both only off by about 0.2. I expected them to be close considering the graphs, but this close was surprising.*
 
 ---
 
@@ -270,13 +278,13 @@ tibble(
 ```{r sampling_distribution, echo=TRUE, eval=FALSE}
 set.seed(480)
 
-reps <- ___   # TODO: choose number of replicates (e.g., 500 or 1000)
+reps <- 1000   # TODO: choose number of replicates (e.g., 500 or 1000)
 
 means <- replicate(
   reps,
   df %>%
     slice_sample(n = n_samp) %>%
-    summarise(m = mean(____, na.rm = TRUE)) %>%
+    summarise(m = mean(response_var, na.rm = TRUE)) %>%
     pull(m)
 )
 
@@ -294,7 +302,7 @@ ggplot(tibble(mean_est = means), aes(mean_est)) +
 
 **Prompt (2–3 sentences):** Is the sampling distribution centered on the population mean? What happens if you increase `n_samp`?
 
-> *Write your answer here.*
+> *Yes, the sampling sitrobutoin appears to be centered on the population mean. Nothing seems to change when increasing n_samp, other than the ammount of time rstudio takes to output the graph.*
 
 ---
 
@@ -309,15 +317,15 @@ set.seed(480)
 
 # GOAL: sample within each month to ensure seasonal representation.
 # TODO: choose n_per_month so total sample size is reasonable (e.g., 12 * 20 = 240)
-n_per_month <- ___
+n_per_month <- 240
 
 samp_strat <- df %>%
   group_by(month) %>%
   slice_sample(n = n_per_month) %>%
   ungroup()
 
-strat_mean <- mean(samp_strat____, na.rm = TRUE)
-strat_sd   <- sd(samp_strat____, na.rm = TRUE)
+strat_mean <- mean(samp_strat[[response_var]], na.rm = TRUE)
+strat_sd   <- sd(samp_strat[[response_var]], na.rm = TRUE)
 
 tibble(
   n_per_month = n_per_month,
@@ -343,7 +351,7 @@ tibble(
 
 **Prompt (3–4 sentences):** Which strategy better approximated the population mean and SD for your response variable? Why might stratification help (or not) here?
 
-> *Write your answer here.*
+> *The SRS sampling strategy works better than stratification for approximating the mean and SD of this variable. I think that since this variable does not have a typical distribution, that stratification does not help provide a more accurate approximation. I think stratification can be useful in other scenarios though, like trying to sample a human population and dividing them uo by age groups. *
 
 ---
 
@@ -356,7 +364,7 @@ Answer in **4–6 sentences**:
 - In EAES field studies, when is stratification essential?
 - What is one trade-off of stratified sampling?
 
-> *Write your answer here.*
+> *Seasonality is important for sampling since many varabile change with the seasons, and accounting for that change is often necessary. When sampling ignores latent grouping varaibles, the avearages tend to not reflect the desired outcome, this acn be useful in some cases when trying to find true averages. I think stratification can be essential in some EAES field studies when the variables have significantly different qualities. The first thing that comes to mind for me is land types, stratification could be useful when working with a data set that includes many land types such as forests, deserts, mountains, marshes, etc. One trade off of stratified sampling is that you often dont account for true averages. The grouping of certain data can skew true averages and medians.*
 
 ---
 
