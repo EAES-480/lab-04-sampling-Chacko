@@ -562,7 +562,7 @@ bind_rows(
 Explain *why* in terms of (i) seasonal/diurnal structure and (ii) dependence/autocorrelation.  
 If you were designing a real EAES study with limited field days, what hybrid strategy would you propose (e.g., stratified + clustered)?
 
-> *Systematic and Quasi-continupus sampling both gave very accurate estimated of the population mean and SD. However, systematic sampling was slightly more accurate than the quasi-continuous estimate, this difference is small wnough that it could be considered negligible in most scenarios. *
+> *Systematic and Quasi-continuous sampling both gave very accurate estimated of the population mean and SD. However, systematic sampling was slightly more accurate than the quasi-continuous estimate, this difference is small enough that it could be considered negligible in most scenarios. Since there was only one month in the data set, the seasonal sampling could not preform well, but it makes sense that systematic and quasi-continuous sampling measured the diurnal patterns well. They can take samples from whatever temporal resolution is necessary. For an EAES study with limited field days, I would try to make a systematic sampling plan beforehand, and then place sensors in the predetermined locations that are cable of taking remote quasi-continous samples. This way you could get the benefits of both methods, and while the sensors may be expensive, the cost after they are deployed should be minimal.*
 
 ---
 
