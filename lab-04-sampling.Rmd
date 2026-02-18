@@ -58,9 +58,12 @@ By the end of this lab, you should be able to:
 
 ## Load and inspect
 
-```{r load_data, echo=TRUE, eval=FALSE}
+```{r load_data, echo=TRUE, eval=T}
 df <- read_csv("data/us-ams-simple.csv") %>%
   clean_names() %>% filter(year_local == 2023)
+
+df$canopy <- c("NO DATA, but these columns were in the self-check section")
+df$climate <- c("NO DATA, but these columns were in the self-check section")
 
 glimpse(df)
 ```
@@ -73,7 +76,7 @@ glimpse(df)
 
 This dataset uses **Year + Day-of-Year (DOY)**. Month must be derived from a calendar date.
 
-```{r derive_time, echo=TRUE, eval=FALSE}
+```{r derive_time, echo=TRUE, eval=T}
 df <- df %>%
   filter(year_local == 2023) %>%
   filter(daytime != -9999) %>%
@@ -105,7 +108,7 @@ Examples you can choose from (depending on what you see in the dataset):
 - Energy: `le`
 - Meteorology: `ta`, `ts`, `swc`
 
-```{r choose_response, echo=TRUE, eval=FALSE}
+```{r choose_response, echo=TRUE, eval=T}
 # TODO: choose ONE response variable (a column name as a string)
 response_var <- "fc"   # replace "gpp" with your choice, e.g. "fc" or "le" or "ta"
 
@@ -147,7 +150,7 @@ Remember: for this lab, the **population** is the entire 2023 half-hourly time s
 
 ## 2.1 Time series view
 
-```{r plot_time_series, echo=TRUE, eval=FALSE}
+```{r plot_time_series, echo=TRUE, eval=T}
 # GOAL: Visualize seasonality over the year.
 # TODO: pick a y aesthetic using response_var.
 
@@ -170,7 +173,7 @@ df %>%
 
 ## 2.2 Population distribution (histogram + density)
 
-```{r pop_distribution, echo=TRUE, eval=FALSE}
+```{r pop_distribution, echo=TRUE, eval=T}
 # GOAL: See the overall distribution of the population.
 # TODO: choose an appropriate number of bins (start with ~50).
 
@@ -195,7 +198,7 @@ ggplot(df, aes(x = fc)) +
 
 ### By month
 
-```{r pop_by_month, echo=TRUE, eval=FALSE}
+```{r pop_by_month, echo=TRUE, eval=T}
 # TODO: make month appear in a sensible order (it already is an ordered factor if label=TRUE)
 
 df$month <- factor(df$month, levels = month.abb)
@@ -207,13 +210,14 @@ df %>%
   geom_boxplot(outlier.alpha = 0.25) +
   theme_classic(base_size = 18) +
   labs(x = NULL, y = response_var, title = "Population by month")
+table(df$month)
 ```
 
 ### By day/night
 
-```{r pop_by_daynight, echo=TRUE, eval=FALSE}
+```{r pop_by_daynight, echo=TRUE, eval=T}
 df %>%
-  ggplot(aes(x = day_night, y = ____)) +
+  ggplot(aes(x = day_night, y = fc)) +
   geom_boxplot(outlier.alpha = 0.25) +
   theme_classic(base_size = 18) +
   labs(x = NULL, y = response_var, title = "Population by day vs night")
@@ -221,7 +225,7 @@ df %>%
 
 **Prompt (3–4 sentences):** Which grouping variable (month or day/night) seems to explain more variability in your response? Why?
 
-> *Monthly seems to have more variablility. Sicne the variable is about carbon flux and the average is alredy close to zero, the difference is small. I think carbon is more suceptable to change between seasons with all the vegetation change than it is on a day to day basis.*
+> *Daily has more variability since there is only data for January so I cannot compare months.  The variable is about carbon flux and the average is already close to zero, the difference is small. Although, I think carbon is more unacceptable to change between seasons with all the vegetation change than it is on a day to day basis. This can't be proven without more data that I don't have though..*
 
 ---
 
@@ -229,7 +233,7 @@ df %>%
 
 Compute the population mean and SD for your chosen response variable.
 
-```{r population_params, echo=TRUE, eval=FALSE}
+```{r population_params, echo=TRUE, eval=T}
 pop_mean <- mean(df[[response_var]], na.rm = TRUE)
 pop_sd   <- sd(df[[response_var]], na.rm = TRUE)
 
@@ -246,7 +250,7 @@ tibble(
 
 ## 4.1 One random sample
 
-```{r one_sample, echo=TRUE, eval=FALSE}
+```{r one_sample, echo=TRUE, eval=T}
 set.seed(480)
 
 # TODO: choose a sample size (e.g., 200, 500, 1000)
@@ -275,10 +279,10 @@ tibble(
 
 ## 4.2 Sampling variability: many samples → many means
 
-```{r sampling_distribution, echo=TRUE, eval=FALSE}
+```{r sampling_distribution, echo=TRUE, eval=T}
 set.seed(480)
 
-reps <- 1000   # TODO: choose number of replicates (e.g., 500 or 1000)
+reps <- 100   # TODO: choose number of replicates (e.g., 500 or 1000)
 
 means <- replicate(
   reps,
@@ -302,7 +306,7 @@ ggplot(tibble(mean_est = means), aes(mean_est)) +
 
 **Prompt (2–3 sentences):** Is the sampling distribution centered on the population mean? What happens if you increase `n_samp`?
 
-> *Yes, the sampling sitrobutoin appears to be centered on the population mean. Nothing seems to change when increasing n_samp, other than the ammount of time rstudio takes to output the graph.*
+> *Yes, the sampling sitrobutoin appears to be centered on the population mean. Nothing seems to change when increasing/deacreasing n_samp, other than the ammount of time rstudio takes to output the graph.*
 
 ---
 
@@ -312,7 +316,7 @@ Here you’ll test whether stratification helps when the population has structur
 
 ## 5.1 Stratify by month
 
-```{r strat_by_month, echo=TRUE, eval=FALSE}
+```{r strat_by_month, echo=TRUE, eval=T}
 set.seed(480)
 
 # GOAL: sample within each month to ensure seasonal representation.
@@ -341,7 +345,7 @@ tibble(
 
 ## 5.2 Compare strategies (SRS vs stratified)
 
-```{r compare_sampling, echo=TRUE, eval=FALSE}
+```{r compare_sampling, echo=TRUE, eval=T}
 tibble(
   strategy = c("Population", "SRS", "Stratified by month"),
   mean = c(pop_mean, samp_mean, strat_mean),
@@ -372,4 +376,214 @@ Answer in **4–6 sentences**:
 
 In the next lab section, we will extend this to **sampling methods in EAES** (e.g., systematic sampling, cluster sampling, sampling frames, and bias) and connect sampling to **hypothesis testing**.
 
-> *Instructor will add this section later. Do not delete this header.*
+
+# Part II — Sampling designs extensions (graded practice)
+
+In Part I you treated the full 2023 half-hourly record as a **population**, then compared **simple random sampling** (SRS) vs **stratified sampling by month**.
+
+Now you will practice additional **sampling designs** discussed in lecture:
+
+- **Systematic** sampling (regular interval)
+- **Cluster** sampling (sample groups, then measure everything in them)
+- **Quasi-continuous** sampling (regular time series subsampling)
+- **Blocked** designs (preview only — think “blocks as structure”)
+
+All exercises below should run using the same objects from Part I:
+- `df` (with `date`, `month`, `day_night`)
+- `response_var`
+- `pop_mean`, `pop_sd`
+- your SRS sample `samp` and stratified sample `samp_strat` (if you created them)
+
+> **Tip:** If you renamed objects in Part I, update the code below to match your names.
+
+---
+
+## Exercise 1 — Systematic sampling (every k-th observation)
+
+**Idea:** sample at a fixed interval (e.g., every 48th record ≈ daily at 30-min resolution).
+
+**Risk:** if the variable has strong cycles aligned with the interval, systematic sampling can be biased.
+
+```{r systematic_sampling, echo=TRUE, eval=T}
+# GOAL: Create a systematic sample and compare mean/sd to population.
+# TODO: choose an interval k (try 48, 24, 96).
+k <- 10
+
+sys_samp <- df %>%
+  # TODO: keep only non-missing response values
+  filter(!is.na(.data[[response_var]])) %>%
+  slice(seq(1, n(), by = k))
+
+sys_mean <- mean(sys_samp[[response_var]], na.rm = TRUE)
+sys_sd   <- sd(sys_samp[[response_var]], na.rm = TRUE)
+
+tibble(
+  strategy = c("Population", "Systematic"),
+  mean = c(pop_mean, sys_mean),
+  sd   = c(pop_sd,   sys_sd),
+  n    = c(nrow(df), nrow(sys_samp))
+)
+```
+
+**Prompt (3–4 sentences):** Did systematic sampling approximate the population mean/SD better or worse than SRS?  
+What cycle (daily or seasonal) might be interacting with your chosen `k`?
+
+> *Systematic sampling approximated the population mean better, or more accurately, than SRS. However, both SRS and stratification both provided a more accurate approximation of SD than systematic sampling. Changing the K value seems to have no effect on the values. Both the daily and seasonal changes in the carbon cycle would be interacting with the k value.  *
+
+---
+
+## Exercise 2 — Cluster sampling (sample days, take all points within those days)
+
+**Definition:** choose a set of clusters (here, **days**) at random, then include **all observations** in the chosen clusters.
+
+This mimics EAES logistics: you may only be able to sample on certain days.
+
+```{r cluster_sampling_days, echo=TRUE, eval=T}
+# GOAL: Sample whole days as clusters, then estimate mean/sd.
+# TODO: choose number of days to sample.
+set.seed(480)
+
+n_days <- 100
+
+days <- df %>%
+  distinct(date) %>%
+  drop_na(date) %>%
+  pull(date)
+
+chosen_days <- sample(days, size = n_days, replace = FALSE)
+
+cluster_samp <- df %>%
+  filter(date %in% chosen_days) %>%
+  filter(!is.na(.data[[response_var]]))
+
+clust_mean <- mean(cluster_samp[[response_var]], na.rm = TRUE)
+clust_sd   <- sd(cluster_samp[[response_var]], na.rm = TRUE)
+
+tibble(
+  strategy = c("Population", "Cluster (days)"),
+  mean = c(pop_mean, clust_mean),
+  sd   = c(pop_sd,   clust_sd),
+  n    = c(nrow(df), nrow(cluster_samp))
+)
+```
+
+**Prompt (3–4 sentences):** Why might cluster sampling have **higher variance** than SRS for the same number of measurements?  
+What feature of time series data (hint: autocorrelation) is relevant here?
+
+> *Cluster sampling groups the data into clusters, which is often less accurate than giving everything an equal chance to be chosen for sampling. Since the cluster is grouping the data on a temporal scale of days, time series can come into play. Autocorrelation can be used to evaluate temporal dependency. *
+
+---
+
+## Exercise 3 — Quasi-continuous sampling (fixed schedule time series)
+
+**Definition:** sample regularly over time to create a *subsampled time series*.
+
+This mimics continuous instrumentation that logs at a lower frequency (e.g., hourly instead of 30-min).
+
+```{r quasi_continuous, echo=TRUE, eval=T}
+# GOAL: Create a regular subsampled time series.
+# TODO: choose a step size (every 2 records = hourly; every 4 = 2-hourly).
+step <- 2
+
+qc_samp <- df %>%
+  filter(!is.na(.data[[response_var]])) %>%
+  slice(seq(1, n(), by = step))
+
+qc_mean <- mean(qc_samp[[response_var]], na.rm = TRUE)
+qc_sd   <- sd(qc_samp[[response_var]], na.rm = TRUE)
+
+tibble(
+  strategy = c("Population", "Quasi-continuous"),
+  mean = c(pop_mean, qc_mean),
+  sd   = c(pop_sd,   qc_sd),
+  n    = c(nrow(df), nrow(qc_samp))
+)
+```
+
+### Visual check: does the subsampled series preserve structure?
+
+```{r qc_plot, echo=TRUE, eval=T}
+# TODO: plot BOTH population and qc_samp time series (thin lines) for a short window
+# HINT: filter to one month to avoid overplotting.
+
+df %>%
+  filter(month == "Jan") %>%   # e.g., "Jul" if month is labeled
+  ggplot(aes(x = date, y = .data[[response_var]])) +
+  geom_line(alpha = 0.25) +
+  theme_classic(base_size = 18) +
+  labs(title = "Population time series (subset)", x = NULL, y = response_var)
+
+qc_samp %>%
+  filter(month == "Jan") %>%
+  ggplot(aes(x = date, y = .data[[response_var]])) +
+  geom_line(alpha = 0.6) +
+  theme_classic(base_size = 18) +
+  labs(title = "Quasi-continuous sample time series (subset)", x = NULL, y = response_var)
+```
+
+**Prompt (3–4 sentences):** Does quasi-continuous sampling preserve the **seasonal** pattern? The **daily** pattern?  
+In an EAES context, when is quasi-continuous sampling preferable to sparse discrete sampling?
+
+> *Yes, quasi-continous sampling preserves the seasonal and daily patterns. Since you can adjust your step size/how often  a sample is recorded, the data's temporal resolution is completely up to the researcher. In an EAES context, quasi-continuous sampling can be done autonomously at a relatively low cost with minimal human activity required, while discrete sampling, even when sparse, can be time intensive. One example of quasi-continuous sampling that comes to mind is the data collected by the sapflow sensors around UIC.*
+
+---
+
+## Exercise 4 — Compare all strategies in one table (and interpret)
+
+```{r compare_all, echo=TRUE, eval=T}
+# GOAL: Assemble a comparison table of mean/sd error for each strategy.
+# NOTE: This assumes you created objects: samp, samp_strat, sys_samp, cluster_samp, qc_samp.
+# If your object names differ, update them here.
+
+summ_stats <- function(dat, label) {
+  tibble(
+    strategy = label,
+    n = nrow(dat),
+    mean = mean(dat[[response_var]], na.rm = TRUE),
+    sd   = sd(dat[[response_var]], na.rm = TRUE)
+  )
+}
+
+bind_rows(
+  tibble(strategy = "Population", n = nrow(df), mean = pop_mean, sd = pop_sd),
+  summ_stats(samp, "SRS"),
+  summ_stats(samp_strat, "Stratified (month)"),
+  summ_stats(sys_samp, "Systematic"),
+  summ_stats(cluster_samp, "Cluster (days)"),
+  summ_stats(qc_samp, "Quasi-continuous")
+) %>%
+  mutate(
+    mean_error = mean - pop_mean,
+    sd_error   = sd - pop_sd
+  )
+```
+
+**Prompt (5–6 sentences, graded):** Which strategy gave the best estimate of the population mean? Of the population SD?  
+Explain *why* in terms of (i) seasonal/diurnal structure and (ii) dependence/autocorrelation.  
+If you were designing a real EAES study with limited field days, what hybrid strategy would you propose (e.g., stratified + clustered)?
+
+> *Systematic and Quasi-continupus sampling both gave very accurate estimated of the population mean and SD. However, systematic sampling was slightly more accurate than the quasi-continuous estimate, this difference is small wnough that it could be considered negligible in most scenarios. *
+
+---
+
+## Blocked designs (preview only — do not implement yet)
+
+A **blocked** design means sampling within blocks (time blocks like months, or spatial blocks like sites), then later treating block as structure in the model (often as a random effect).
+
+You already approximated blocking by stratifying over `month`. Later, we will return to this idea when we fit models that include block structure explicitly.
+
+# Submission + self-check
+
+## Before you knit (Run All)
+- [ ] Setup chunk runs without errors
+- [ ] Data join happened (df_raw has both canopy + climate columns)
+- [ ] All chunks run top-to-bottom
+- [ ] No objects created only in the Console
+- [ ] Interpretation answers are complete sentences
+
+## After you knit
+- [ ] Figures appear in the output
+- [ ] Tables render and are readable
+- [ ] Your selected x and y are clearly stated in the document
+
+**Save, commit, push to Github.**
